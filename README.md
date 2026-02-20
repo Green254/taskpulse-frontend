@@ -1,3 +1,27 @@
+# TaskPulse Frontend
+
+## Today's Accomplishments (February 20, 2026)
+
+### Frontend (taskpulse-frontend)
+- Upgraded authentication flows and protected routing behavior.
+- Added links back to Home on auth-related screens.
+- Expanded dashboard functionality:
+  - Task CRUD
+  - Search/filter/status controls
+  - Team-aware assignment behavior by role
+  - Organization updates feed and active weekly theme banner
+- Built a functional Master Admin Dashboard UI:
+  - Manage users (create, update hierarchy/role, suspend/reactivate, delete)
+  - Post/delete announcements
+  - Create and activate weekly themes
+- Added suspended-account handling in session/API flow.
+
+### Validation
+- Frontend production build passing.
+- Lint passes with warnings only.
+
+---
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
