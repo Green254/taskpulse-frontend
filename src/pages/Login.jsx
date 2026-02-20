@@ -1,15 +1,35 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import TextInput from '../components/TextInput'
 import Toast from '../components/Toast'
 import Spinner from '../components/Spinner'
+import { API_BASE_URL, API_URL } from '../config/api'
+
+const firstErrorFromPayload = (payload, fallbackMessage) => {
+  if (payload?.message) {
+    return payload.message
+  }
+
+  if (payload?.errors && typeof payload.errors === 'object') {
+    for (const key of Object.keys(payload.errors)) {
+      const fieldErrors = payload.errors[key]
+      if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
+        return fieldErrors[0]
+      }
+    }
+  }
+
+  return fallbackMessage
+}
 
 export default function Login() {
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [errors, setErrors] = useState({})
   const [toast, setToast] = useState(null)
   const [loading, setLoading] = useState(false)
 
+  const { login } = useAuth()
   const navigate = useNavigate()
 
   const handleChange = (e) => {
@@ -17,10 +37,11 @@ export default function Login() {
     setErrors({ ...errors, [e.target.name]: '' })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
     const validationErrors = {}
+    if (!form.name) validationErrors.name = 'Name is required.'
     if (!form.email) validationErrors.email = 'Email is required.'
     else if (!/\S+@\S+\.\S+/.test(form.email))
       validationErrors.email = 'Invalid email format.'
@@ -34,17 +55,53 @@ export default function Login() {
 
     setLoading(true)
 
-    // Simulate API login call
-    setTimeout(() => {
-      setLoading(false)
-      setErrors({})
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(form),
+      })
+
+      let payload = {}
+      try {
+        payload = await response.json()
+      } catch {
+        payload = {}
+      }
+
+      if (!response.ok) {
+        if (payload?.errors?.name?.[0]) {
+          setErrors((previous) => ({ ...previous, name: payload.errors.name[0] }))
+        }
+        if (payload?.errors?.email?.[0]) {
+          setErrors((previous) => ({ ...previous, email: payload.errors.email[0] }))
+        }
+        throw new Error(firstErrorFromPayload(payload, 'Login failed'))
+      }
+
+      if (!payload?.token || !payload?.user) {
+        throw new Error('Invalid login response from server.')
+      }
+
+      login(payload.user, payload.token)
       setToast({ message: 'Login successful!', type: 'success' })
 
-      // Redirect after a slight delay so user sees toast
       setTimeout(() => {
         navigate('/dashboard')
-      }, 1000)
-    }, 2000)
+      }, 700)
+    } catch (err) {
+      const errorMessage =
+        err instanceof TypeError
+          ? `Unable to reach API at ${API_BASE_URL}. Check VITE_API_BASE_URL and backend CORS configuration.`
+          : err.message
+
+      setToast({ message: errorMessage, type: 'error' })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -62,6 +119,16 @@ export default function Login() {
           <h2 className="text-2xl font-semibold text-center mb-6">Login</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <TextInput
+              id="name"
+              label="Name"
+              type="text"
+              value={form.name}
+              onChange={handleChange}
+              error={errors.name}
+              autoComplete="name"
+            />
+
             <TextInput
               id="email"
               label="Email"
@@ -105,6 +172,12 @@ export default function Login() {
             Don't have an account?{' '}
             <Link to="/register" className="text-blue-600 hover:underline">
               Register
+            </Link>
+          </p>
+
+          <p className="mt-2 text-center text-sm">
+            <Link to="/" className="text-blue-600 hover:underline">
+              Back to Home
             </Link>
           </p>
         </div>

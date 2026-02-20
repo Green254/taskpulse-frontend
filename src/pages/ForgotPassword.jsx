@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import TextInput from '../components/TextInput';
 import Toast from '../components/Toast';
 
@@ -31,7 +31,7 @@ export default function ForgotPassword() {
       setToast({ message: 'Reset link sent to your email.', type: 'success' });
 
       setTimeout(() => {
-        navigate('/reset-password'); // 👈 Redirect to  reset password page
+        navigate('/reset-password'); //  Redirect to  reset password page
       }, 1000);
     }, 2000);
   };
@@ -73,6 +73,12 @@ export default function ForgotPassword() {
               {loading ? 'Sending...' : 'Send Reset Link'}
             </button>
           </form>
+
+          <p className="mt-4 text-center text-sm">
+            <Link to="/" className="text-blue-600 hover:underline">
+              Back to Home
+            </Link>
+          </p>
         </div>
       </div>
     </>
